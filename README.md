@@ -40,63 +40,6 @@ Important library version history
 | react-hook-form       | v3.24.2 |
 | zod                   | v3.24.2 |
 
-## Git Rule
-
-### 2.1 Add
-
-파일 생성 시 사용
-
-```zsh
-git commit -m 'add test atom'
-```
-
-### 2.2 Update
-
-리팩토링, 성능 향상 등
-
-```zsh
-git commit -m 'update test atom type 추가'
-```
-
-### 2.2 Style
-
-단순 css 수정 등
-
-```zsh
-git commit -m 'style test atom margin'
-```
-
-### 2.2 Fix
-
-기능 관련 오류 수정
-
-```zsh
-git commit -m 'fix userData update 안되는 현상 수정'
-```
-
-### 2.2 HotFix
-
-서비스 치명적 오류 수정
-
-```zsh
-git commit -m 'hotfix 무한 로그인 현상 수정'
-```
-
-### 2.2 Delete
-
-파일 삭제 시 사용
-
-```zsh
-git commit -m 'delete test atom'
-```
-
-### Branch Rule
-
-- main → dev 하위로 feature 브랜치 생성
-- hotfix는 dev에서 바로 브랜치 생성
-- feature 및 하위 브랜치는 Squash and Merge
-- dev에서 main은 Normal Merge
-
 ## Process List
 
 1. **라우팅 구조 설계**
