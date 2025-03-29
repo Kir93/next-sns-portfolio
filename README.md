@@ -32,8 +32,8 @@ Important library version history
 
 | Name                  | Version |
 | :-------------------- | :------ |
+| next                  | latest  |
 | react                 | v19     |
-| next                  | v15.1.6 |
 | @chakra-ui/react      | v3.8.0  |
 | zustand               | v5.0.3  |
 | @tanstack/react-query | v5.66.0 |
