@@ -42,8 +42,9 @@ Important library version history
 
 ## Process List
 
+- Mobile 전용 웹 사이트 만들기 > max width 414 이하 + max width 768 이하
+
 1. **페이지 제작**
-   - [ ] 헤더, 푸터, 네비게이션 등 기본 컴포넌트 개발
    - [ ] 페이지 기본 UI 설계
    - [ ] react-hook-form과 zod를 이용한 form 구성
    - [ ] 페이지 기능 통합 및 테스트
