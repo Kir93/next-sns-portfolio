@@ -32,11 +32,11 @@
     "react": "^19",
     "react-dom": "^19",
     "react-hook-form": "^7.70.0",
-    "zod": "^4.2.1",
+    "zod": "^4.3.5",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@tanstack/react-query-devtools": "^5.91.1",
+    "@tanstack/react-query-devtools": "^5.91.2",
     "@types/node": "25.0.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
