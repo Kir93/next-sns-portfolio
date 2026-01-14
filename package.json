@@ -31,7 +31,7 @@
     "next-sitemap": "^4.2.3",
     "react": "^19",
     "react-dom": "^19",
-    "react-hook-form": "^7.70.0",
+    "react-hook-form": "^7.71.0",
     "zod": "^4.3.5",
     "zustand": "^5.0.10"
   },
