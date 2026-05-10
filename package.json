@@ -32,12 +32,12 @@
     "react": "^19",
     "react-dom": "^19",
     "react-hook-form": "^7.75.0",
-    "zod": "^4.3.6",
+    "zod": "^4.4.3",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.99.2",
-    "@types/node": "25.5.2",
+    "@types/node": "25.6.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cross-env": "^10.1.0",
