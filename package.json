@@ -33,7 +33,7 @@
     "react-dom": "^19",
     "react-hook-form": "^7.75.0",
     "zod": "^4.4.3",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.99.2",
