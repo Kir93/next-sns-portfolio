@@ -39,8 +39,11 @@ robots.txt
 *.tsbuildinfo
 next-env.d.ts
 
-# GitHub Copilot Instructions
+# ai-config
 copilot-instructions.md
+.claude
+CLAUDE.md
+AGENTS.md
 
 # cache files
 .eslintcache
