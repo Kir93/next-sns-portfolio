@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.100.14",
-    "@types/node": "25.9.1",
+    "@types/node": "25.9.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cross-env": "^10.1.0",
