@@ -2,9 +2,10 @@
 
 const nextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
   transpilePackages: ['zustand'],
   experimental: {
-    optimizePackageImports: ['@chakra-ui/react']
+    optimizePackageImports: ['lucide-react']
   },
   eslint: {
     ignoreDuringBuilds: true

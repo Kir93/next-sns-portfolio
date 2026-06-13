@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+/* Mobile-first breakpoints (414 / 768). md(768) is a Tailwind default; add the 414 tier. */
+@theme {
+  --breakpoint-xs: 414px;
+  --color-background: #f9fafc;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-background);
+  -webkit-tap-highlight-color: transparent;
+}

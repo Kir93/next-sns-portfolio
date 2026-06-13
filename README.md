@@ -12,17 +12,16 @@ git clone https://github.com/Kir93/next-sns-portfolio.git
 ```
 
 1. Install packages - pnpm install
-2. Changed Theme - ./styles/theme.ts
-3. Theme Typegen - npx @chakra-ui/cli typegen ./src/styles/theme.ts
-4. Running Project - pnpm dev or npm run dev or yarn dev
+2. Running Project - pnpm dev
 
 ## Repository short explanation
 
-NextJS app router simple template.
+Next.js App Router based SNS feed portfolio.
 
-- **Framework**: Next.js, React
+- **Framework**: Next.js (App Router), React
 - **Language**: TypeScript
-- **Styling**: TailwindCSS
+- **Compiler**: React Compiler (automatic memoization)
+- **Styling**: Tailwind CSS v4 + Base UI (headless) + shadcn pattern (CVA / clsx / tailwind-merge) + lucide-react
 - **State Management**: React Query, Zustand
 - **Form Handling**: React-Hook-Form, Zod
 - **API Mocking**: MSW (Mock Service Worker)
@@ -33,12 +32,13 @@ NextJS app router simple template.
 
 Important library version history
 
-| Name                  | Version |
-| :-------------------- | :------ |
-| next                  | latest  |
-| react                 | v19     |
-| @chakra-ui/react      | v3.8.0  |
-| zustand               | v5.0.3  |
-| @tanstack/react-query | v5.66.0 |
-| react-hook-form       | v3.24.2 |
-| zod                   | v3.24.2 |
+| Name                  | Version  |
+| :-------------------- | :------- |
+| next                  | 16.2.7   |
+| react                 | 19.2.7   |
+| @base-ui/react        | 1.5.0    |
+| tailwindcss           | 4.3.0    |
+| zustand               | 5.0.14   |
+| @tanstack/react-query | 5.100.14 |
+| react-hook-form       | 7.76.1   |
+| zod                   | 4.4.3    |
