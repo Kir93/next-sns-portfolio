@@ -32,6 +32,7 @@
       "@atoms": ["src/atoms"],
       "@components": ["src/components"],
       "@lib": ["src/lib"],
+      "@type": ["src/types"],
       "@provider": ["provider"],
       "@api/*": ["src/api/*"],
       "@utils/*": ["src/utils/*"],
@@ -42,6 +43,7 @@
       "@atoms/*": ["src/atoms/*"],
       "@components/*": ["src/components/*"],
       "@lib/*": ["src/lib/*"],
+      "@type/*": ["src/types/*"],
       "@provider/*": ["src/provider/*"]
     },
     "incremental": true,

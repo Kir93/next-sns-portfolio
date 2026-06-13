@@ -15,7 +15,8 @@ const importOrder = [
       { pattern: '@provider/**', group: 'internal', position: 'after' },
       { pattern: '@atoms/**', group: 'internal', position: 'after' },
       { pattern: '@components/**', group: 'internal', position: 'after' },
-      { pattern: '@lib/**', group: 'internal', position: 'after' }
+      { pattern: '@lib/**', group: 'internal', position: 'after' },
+      { pattern: '@type/**', group: 'internal', position: 'after' }
     ],
     pathGroupsExcludedImportTypes: ['type'],
     alphabetize: { order: 'asc', caseInsensitive: true },
@@ -48,7 +49,8 @@ const config = [
       'out/**',
       'build/**',
       'next-env.d.ts',
-      '**/*.config.{js,mjs}'
+      '**/*.config.{js,mjs}',
+      'public/mockServiceWorker.js'
     ]
   }
 ];

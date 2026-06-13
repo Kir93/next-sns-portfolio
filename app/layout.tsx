@@ -2,6 +2,7 @@ import './globals.css';
 
 import { notoSans } from '@configs/bigContents';
 
+import MswProvider from '@provider/MswProvider';
 import ReactQueryProvider from '@provider/ReactQueryProvider';
 
 import { AppLayout } from '@components/layout';
@@ -22,7 +23,9 @@ export default function RootLayout({
     <html lang="ko" className={notoSans.className} suppressHydrationWarning>
       <body>
         <ReactQueryProvider>
-          <AppLayout>{children}</AppLayout>
+          <MswProvider>
+            <AppLayout>{children}</AppLayout>
+          </MswProvider>
         </ReactQueryProvider>
       </body>
     </html>
