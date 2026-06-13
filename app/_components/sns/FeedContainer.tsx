@@ -53,7 +53,10 @@ export default function FeedContainer() {
     <section aria-label="피드">
       <ul className="divide-y divide-gray-200">
         {posts.map((item) => (
-          <li key={item.id}>
+          <li
+            key={item.id}
+            className="[contain-intrinsic-size:auto_420px] [content-visibility:auto]"
+          >
             <SnsCard user={item.user} post={item.post} stats={item.stats} />
           </li>
         ))}
