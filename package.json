@@ -10,6 +10,8 @@
     "analyzer": "cross-env NODE_ENV=production ANALYZE=true next build",
     "type-check": "tsc",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
     "depcheck": "npx depcheck",
     "svgo": "npx svgo -f public/svgs",
     "prepare": "husky install",
@@ -38,11 +40,16 @@
     "zustand": "5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "1.60.0",
     "@tailwindcss/postcss": "4.3.0",
     "@tanstack/react-query-devtools": "5.100.14",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "@types/node": "25.9.1",
     "@types/react": "19.2.16",
     "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "10.1.0",
     "eslint": "9.39.2",
@@ -53,12 +60,15 @@
     "eslint-plugin-prettier": "5.5.6",
     "eslint-plugin-react": "7.37.5",
     "husky": "9.1.7",
+    "jsdom": "29.1.1",
     "lint-staged": "17.0.5",
     "msw": "2.14.6",
     "postcss": "8.5.15",
     "prettier": "3.8.3",
     "tailwindcss": "4.3.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.8"
   },
   "lint-staged": {
     "**/*.{tsx,ts,jsx,js}": [

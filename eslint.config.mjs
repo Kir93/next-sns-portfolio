@@ -49,7 +49,7 @@ const config = [
       'out/**',
       'build/**',
       'next-env.d.ts',
-      '**/*.config.{js,mjs}',
+      '**/*.config.{js,mjs,ts}',
       'public/mockServiceWorker.js'
     ]
   }
