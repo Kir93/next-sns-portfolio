@@ -4,10 +4,10 @@ const img = (seed: string) => `https://picsum.photos/seed/${seed}/700/700`;
 const avatar = (seed: string) => `https://picsum.photos/seed/${seed}/96/96`;
 
 /**
- * Mock feed covering every ImageGrid variation (0/1/2/3/4/5+ images).
+ * Featured posts covering every ImageGrid variation (0/1/2/3/4/5+ images).
  * `createdAt` values are fixed ISO strings for deterministic rendering.
  */
-export const posts: SnsCardData[] = [
+const featuredPosts: SnsCardData[] = [
   {
     id: 'p1',
     user: {
@@ -92,3 +92,28 @@ export const posts: SnsCardData[] = [
     stats: { comments: 102, retweets: 268, likes: 4820, views: 130400 }
   }
 ];
+
+/** Extra posts so the cursor pagination spans multiple pages. */
+const generatedPosts: SnsCardData[] = Array.from({ length: 12 }, (_, i) => {
+  const n = i + 7;
+  const imageCount = i % 5;
+  return {
+    id: `p${n}`,
+    user: {
+      profileImageUrl: avatar(`user-${n}`),
+      displayName: `데모 사용자 ${n}`,
+      username: `demo${n}`
+    },
+    post: {
+      content: `무한스크롤 데모 게시물 ${n}. 하단 도달 시 다음 페이지가 이어 로드됩니다.`,
+      images:
+        imageCount > 0
+          ? Array.from({ length: imageCount }, (_, k) => img(`p${n}-${k + 1}`))
+          : undefined,
+      createdAt: new Date(Date.UTC(2026, 5, 10) - (i + 1) * 3_600_000).toISOString()
+    },
+    stats: { comments: n, retweets: n * 2, likes: n * 13, views: n * 137 }
+  };
+});
+
+export const posts: SnsCardData[] = [...featuredPosts, ...generatedPosts];

@@ -1,14 +1,23 @@
 import type { CreatePostInput } from '@lib/schemas/post';
-import type { SnsCardData } from '@type/sns';
+import type { FeedPage, SnsCardData } from '@type/sns';
 
-/** Fetch the feed. In development MSW intercepts `GET /api/posts`. */
-export async function getPosts(): Promise<SnsCardData[]> {
-  const res = await fetch('/api/posts');
+/** Fetch one cursor page of the feed. In development MSW intercepts `GET /api/posts`. */
+export async function getPostsPage({
+  cursor,
+  limit = 10
+}: {
+  cursor: string | null;
+  limit?: number;
+}): Promise<FeedPage> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+  params.set('limit', String(limit));
+
+  const res = await fetch(`/api/posts?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch posts: ${res.status}`);
   }
-  const data: { posts: SnsCardData[] } = await res.json();
-  return data.posts;
+  return res.json() as Promise<FeedPage>;
 }
 
 /** Create a post. In development MSW intercepts `POST /api/posts`. */

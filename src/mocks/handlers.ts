@@ -12,7 +12,26 @@ let feed: SnsCardData[] = [...seedPosts];
 let nextId = 1;
 
 export const handlers = [
-  http.get('/api/posts', () => HttpResponse.json({ posts: feed })),
+  http.get('/api/posts', ({ request }) => {
+    const url = new URL(request.url);
+    const cursor = url.searchParams.get('cursor');
+    const limit = Number(url.searchParams.get('limit')) || 10;
+
+    let startIndex = 0;
+    if (cursor) {
+      const cursorIndex = feed.findIndex((p) => p.id === cursor);
+      // Unknown/stale cursor → signal end rather than silently re-serving page 1.
+      if (cursorIndex === -1) {
+        return HttpResponse.json({ posts: [], nextCursor: null });
+      }
+      startIndex = cursorIndex + 1;
+    }
+    const page = feed.slice(startIndex, startIndex + limit);
+    const hasMore = startIndex + limit < feed.length;
+    const nextCursor = hasMore ? (page.at(-1)?.id ?? null) : null;
+
+    return HttpResponse.json({ posts: page, nextCursor });
+  }),
 
   http.post('/api/posts', async ({ request }) => {
     const parsed = createPostSchema.safeParse(await request.json());

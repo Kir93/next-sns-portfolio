@@ -1,10 +1,11 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 
-import { getPosts } from '@api/post/post';
+import { useIntersectionObserver } from '@utils/useIntersectionObserver';
 
 import SnsCard from './SnsCard';
+import { useInfiniteFeed } from './useInfiniteFeed';
 
 function FeedStatus({ message }: { message: string }) {
   return (
@@ -19,18 +20,22 @@ function FeedStatus({ message }: { message: string }) {
 }
 
 /**
- * Fetches the feed via TanStack Query and renders it as a vertical list of
- * SnsCard items. Structured to extend toward infinite scroll (slice 3).
+ * Renders the cursor-paginated feed with infinite scroll: a sentinel near the
+ * bottom triggers `fetchNextPage` (guarded against duplicate loads), and the
+ * IntersectionObserver disconnects on unmount.
  */
 export default function FeedContainer() {
-  const {
-    data: posts,
-    isPending,
-    isError
-  } = useQuery({
-    queryKey: ['posts'],
-    queryFn: getPosts
-  });
+  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteFeed();
+
+  const sentinelRef = useIntersectionObserver<HTMLDivElement>(
+    () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    { enabled: hasNextPage, rootMargin: '200px' }
+  );
 
   if (isPending) {
     return <FeedStatus message="피드를 불러오는 중…" />;
@@ -38,6 +43,8 @@ export default function FeedContainer() {
   if (isError) {
     return <FeedStatus message="피드를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." />;
   }
+
+  const posts = data.pages.flatMap((page) => page.posts);
   if (posts.length === 0) {
     return <FeedStatus message="아직 게시물이 없습니다." />;
   }
@@ -51,6 +58,22 @@ export default function FeedContainer() {
           </li>
         ))}
       </ul>
+
+      {hasNextPage ? (
+        <div
+          ref={sentinelRef}
+          className="flex justify-center p-6"
+          aria-hidden={!isFetchingNextPage}
+        >
+          {isFetchingNextPage && (
+            <span role="status" aria-label="다음 페이지 불러오는 중">
+              <Loader2 aria-hidden className="size-5 text-gray-400 motion-safe:animate-spin" />
+            </span>
+          )}
+        </div>
+      ) : (
+        <p className="p-6 text-center text-sm text-gray-400">마지막 게시물입니다.</p>
+      )}
     </section>
   );
 }

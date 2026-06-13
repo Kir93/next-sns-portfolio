@@ -1,18 +1,18 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { type InfiniteData, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { createPost } from '@api/post/post';
 
 import { CURRENT_USER } from '@lib/current-user';
 
-import type { CreatePostInput } from '@lib/schemas/post';
-import type { SnsCardData } from '@type/sns';
+import { FEED_QUERY_KEY } from '../useInfiniteFeed';
 
-/** Must match FeedContainer's query key. */
-const FEED_KEY = ['posts'];
+import type { CreatePostInput } from '@lib/schemas/post';
+import type { FeedPage, SnsCardData } from '@type/sns';
 
 /**
- * Optimistic post creation: prepend a temporary card on mutate, roll back on
- * error, and invalidate on settle so the server card replaces the temp one.
+ * Optimistic post creation against the infinite feed: prepend a temporary card
+ * to the first page on mutate, roll back on error, invalidate on settle so the
+ * server card replaces the temp one.
  */
 export function useCreatePost() {
   const queryClient = useQueryClient();
@@ -20,8 +20,8 @@ export function useCreatePost() {
   return useMutation({
     mutationFn: createPost,
     onMutate: async (input: CreatePostInput) => {
-      await queryClient.cancelQueries({ queryKey: FEED_KEY });
-      const previous = queryClient.getQueryData<SnsCardData[]>(FEED_KEY);
+      await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
+      const previous = queryClient.getQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY);
 
       const optimistic: SnsCardData = {
         id: `temp-${crypto.randomUUID()}`,
@@ -33,17 +33,27 @@ export function useCreatePost() {
         },
         stats: { comments: 0, retweets: 0, likes: 0, views: 0 }
       };
-      queryClient.setQueryData<SnsCardData[]>(FEED_KEY, (old = []) => [optimistic, ...old]);
+
+      queryClient.setQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY, (old) => {
+        if (!old || old.pages.length === 0) {
+          return { pages: [{ posts: [optimistic], nextCursor: null }], pageParams: [null] };
+        }
+        const [firstPage, ...restPages] = old.pages;
+        return {
+          ...old,
+          pages: [{ ...firstPage, posts: [optimistic, ...firstPage.posts] }, ...restPages]
+        };
+      });
 
       return { previous };
     },
     onError: (_error, _input, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(FEED_KEY, context.previous);
+        queryClient.setQueryData(FEED_QUERY_KEY, context.previous);
       }
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     }
   });
 }

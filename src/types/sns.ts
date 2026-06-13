@@ -29,3 +29,9 @@ export interface SnsCardData {
   post: SnsPost;
   stats: SnsStats;
 }
+
+/** One page of the cursor-paginated feed. `nextCursor: null` marks the end. */
+export interface FeedPage {
+  posts: SnsCardData[];
+  nextCursor: string | null;
+}
