@@ -47,6 +47,7 @@ copilot-instructions.md
 .claude
 CLAUDE.md
 AGENTS.md
+AGENTS.local.md
 
 # cache files
 .eslintcache
