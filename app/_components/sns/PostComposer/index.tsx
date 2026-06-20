@@ -78,13 +78,13 @@ export default function PostComposer() {
       )}
 
       <div className="flex items-center justify-between pt-1">
-        <span className="text-xs tabular-nums text-gray-400">
+        <span className="text-xs tabular-nums text-gray-500">
           {content.length}/{MAX_CONTENT}
         </span>
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-1.5 rounded-full bg-blue-500 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
         >
           {isPending && <Loader2 aria-hidden className="size-4 motion-safe:animate-spin" />}
           {isPending ? '게시 중…' : '게시하기'}

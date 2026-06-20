@@ -75,7 +75,7 @@ export default function FeedContainer() {
           )}
         </div>
       ) : (
-        <p className="p-6 text-center text-sm text-gray-400">마지막 게시물입니다.</p>
+        <p className="p-6 text-center text-sm text-gray-500">마지막 게시물입니다.</p>
       )}
     </section>
   );
