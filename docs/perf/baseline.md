@@ -28,12 +28,12 @@ pnpm dlx lighthouse https://next-sns-portfolio.vercel.app/ \
 | TBT (INP 랩 프록시)    | **84 ms**           | INP은 필드 지표라 랩에선 TBT로 대용 (<200 ms 양호)                  |
 | FCP                    | **1.2 s** (1214 ms) | 서버 렌더 셸                                                         |
 | Speed Index            | **2.3 s** (2287 ms) |                                                                      |
-| Accessibility          | **96**              | 실패 감사 1건: `color-contrast` (저대비 보조 텍스트)               |
+| Accessibility          | **100**             | color-contrast 해소 후 전 감사 통과 (2026-06-20 재실측)            |
 
 ## 관찰 / 후속
 
 - **LCP 4.0 s가 가장 큰 개선 여지.** 원인은 ADR-001의 결정(피드 client-fetch + MSW 워커 준비까지 렌더 게이팅)으로, 이는 ADR-001이 명시한 "−" tradeoff를 정량화한 것이다. 실백엔드 도입 시 RSC prefetch + `HydrationBoundary`로 개선 가능(ADR-001 supersede 후보).
-- **color-contrast 1건**: 타임스탬프/보조 텍스트의 회색 대비 부족 추정 — a11y 100 달성하려면 대비 상향 필요.
+- **color-contrast 해소**: 글자수 카운터·게시 버튼·피드 끝 문구의 대비를 상향(`text-gray-400`→`text-gray-500`, `bg-blue-500`→`bg-blue-600`)해 a11y **100** 달성. 배포 URL 재실측으로 확인(커밋 2395134, 2026-06-20).
 - React Compiler 자동 메모(스크롤 시 SnsCard 리렌더 억제)는 React DevTools Profiler 계측이 필요해 이번 page-load 패스에선 다루지 않았다. 스크롤은 피드 상태를 바꾸지 않으므로 구조적으로 리렌더 트리거가 없다.
 </content>
 </invoke>
