@@ -18,16 +18,15 @@ function startWorkerOnce() {
 }
 
 /**
- * Starts the MSW browser worker in development and gates rendering until it is
- * ready, so the first client query cannot leak to a real route before the
- * Service Worker intercepts it. In production the worker is never started.
+ * Starts the MSW browser worker (the app's only data source — see ADR-001) and
+ * gates rendering until it is ready, so the first client query cannot leak to a
+ * real route before the Service Worker intercepts it. Runs in development and in
+ * the deployed demo build alike, since there is no real backend.
  */
 export default function MswProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(() => process.env.NODE_ENV !== 'development');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-
     let active = true;
     void startWorkerOnce().then(() => {
       if (active) setReady(true);

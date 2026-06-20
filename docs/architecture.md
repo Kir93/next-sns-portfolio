@@ -40,7 +40,7 @@ Instead of a waterfall of horizontal phases, the app was built as independent **
 
 ## Data & mocking
 
-A single `src/mocks/handlers.ts` is shared by the browser worker (dev, `src/mocks/browser.ts`) and the Node server (test, `src/mocks/server.ts`), so dev and tests mock identically.
+A single `src/mocks/handlers.ts` is shared by the browser worker (dev + deployed demo, `src/mocks/browser.ts`) and the Node server (test, `src/mocks/server.ts`), so every environment mocks identically.
 
 ## Performance
 
