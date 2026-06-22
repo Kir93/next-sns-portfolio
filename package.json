@@ -69,7 +69,7 @@
     "tailwindcss": "4.3.0",
     "typescript": "6.0.3",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "4.1.8"
+    "vitest": "4.1.9"
   },
   "lint-staged": {
     "**/*.{tsx,ts,jsx,js}": [
