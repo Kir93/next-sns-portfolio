@@ -31,7 +31,8 @@ export function useCreatePost() {
           images: input.images,
           createdAt: new Date().toISOString()
         },
-        stats: { comments: 0, retweets: 0, likes: 0, views: 0 }
+        stats: { comments: 0, retweets: 0, likes: 0, views: 0 },
+        liked: false
       };
 
       queryClient.setQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY, (old) => {

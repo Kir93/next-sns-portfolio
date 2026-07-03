@@ -50,10 +50,24 @@ export const handlers = [
         images: parsed.data.images,
         createdAt: new Date().toISOString()
       },
-      stats: { comments: 0, retweets: 0, likes: 0, views: 0 }
+      stats: { comments: 0, retweets: 0, likes: 0, views: 0 },
+      liked: false
     };
     feed = [post, ...feed];
 
     return HttpResponse.json({ post }, { status: 201 });
+  }),
+
+  http.post('/api/posts/:id/like', ({ params }) => {
+    const target = feed.find((p) => p.id === params.id);
+    if (!target) {
+      return HttpResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+    // Single toggle: flip liked, adjust the count by ±1, confirm with the response.
+    const liked = !target.liked;
+    target.liked = liked;
+    target.stats = { ...target.stats, likes: target.stats.likes + (liked ? 1 : -1) };
+
+    return HttpResponse.json({ id: target.id, liked, likes: target.stats.likes });
   })
 ];

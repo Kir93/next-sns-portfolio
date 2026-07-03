@@ -19,7 +19,8 @@ const featuredPosts: SnsCardData[] = [
       content: '텍스트만 있는 게시물. 이미지 영역은 렌더되지 않아야 함.',
       createdAt: '2026-06-13T09:30:00.000Z'
     },
-    stats: { comments: 12, retweets: 4, likes: 88, views: 1203 }
+    stats: { comments: 12, retweets: 4, likes: 88, views: 1203 },
+    liked: false
   },
   {
     id: 'p2',
@@ -33,7 +34,8 @@ const featuredPosts: SnsCardData[] = [
       images: [img('p2-1')],
       createdAt: '2026-06-13T08:10:00.000Z'
     },
-    stats: { comments: 3, retweets: 1, likes: 25, views: 410 }
+    stats: { comments: 3, retweets: 1, likes: 25, views: 410 },
+    liked: false
   },
   {
     id: 'p3',
@@ -47,7 +49,8 @@ const featuredPosts: SnsCardData[] = [
       images: [img('p3-1'), img('p3-2')],
       createdAt: '2026-06-12T21:45:00.000Z'
     },
-    stats: { comments: 7, retweets: 9, likes: 132, views: 2890 }
+    stats: { comments: 7, retweets: 9, likes: 132, views: 2890 },
+    liked: false
   },
   {
     id: 'p4',
@@ -61,7 +64,8 @@ const featuredPosts: SnsCardData[] = [
       images: [img('p4-1'), img('p4-2'), img('p4-3')],
       createdAt: '2026-06-12T14:05:00.000Z'
     },
-    stats: { comments: 21, retweets: 33, likes: 540, views: 9921 }
+    stats: { comments: 21, retweets: 33, likes: 540, views: 9921 },
+    liked: false
   },
   {
     id: 'p5',
@@ -75,7 +79,8 @@ const featuredPosts: SnsCardData[] = [
       images: [img('p5-1'), img('p5-2'), img('p5-3'), img('p5-4')],
       createdAt: '2026-06-11T18:20:00.000Z'
     },
-    stats: { comments: 0, retweets: 0, likes: 0, views: 64 }
+    stats: { comments: 0, retweets: 0, likes: 0, views: 64 },
+    liked: false
   },
   {
     id: 'p6',
@@ -89,7 +94,8 @@ const featuredPosts: SnsCardData[] = [
       images: [img('p6-1'), img('p6-2'), img('p6-3'), img('p6-4'), img('p6-5')],
       createdAt: '2026-06-10T07:00:00.000Z'
     },
-    stats: { comments: 102, retweets: 268, likes: 4820, views: 130400 }
+    stats: { comments: 102, retweets: 268, likes: 4820, views: 130400 },
+    liked: false
   }
 ];
 
@@ -112,7 +118,8 @@ const generatedPosts: SnsCardData[] = Array.from({ length: 12 }, (_, i) => {
           : undefined,
       createdAt: new Date(Date.UTC(2026, 5, 10) - (i + 1) * 3_600_000).toISOString()
     },
-    stats: { comments: n, retweets: n * 2, likes: n * 13, views: n * 137 }
+    stats: { comments: n, retweets: n * 2, likes: n * 13, views: n * 137 },
+    liked: false
   };
 });
 

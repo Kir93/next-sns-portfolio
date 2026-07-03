@@ -1,32 +1,27 @@
 'use client';
 
+import { Suspense } from 'react';
+
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
 import { useIntersectionObserver } from '@utils/useIntersectionObserver';
 
+import ErrorBoundary from '@components/common/ErrorBoundary';
+
+import FeedError from './FeedError';
+import FeedSkeleton from './FeedSkeleton';
 import SnsCard from './SnsCard';
 import { useInfiniteFeed } from './useInfiniteFeed';
 
-function FeedStatus({ message }: { message: string }) {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex flex-1 items-center justify-center p-10 text-center text-sm text-gray-500"
-    >
-      {message}
-    </div>
-  );
-}
-
 /**
- * Renders the cursor-paginated feed with infinite scroll: a sentinel near the
- * bottom triggers `fetchNextPage` (guarded against duplicate loads), and the
- * IntersectionObserver disconnects on unmount.
+ * Feed body. Uses the Suspense query, so data is always present here — loading and
+ * error are owned by the surrounding boundaries, not imperative branches. A
+ * sentinel near the bottom triggers `fetchNextPage` (guarded against duplicate
+ * loads); the IntersectionObserver disconnects on unmount.
  */
-export default function FeedContainer() {
-  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteFeed();
+function FeedList() {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteFeed();
 
   const sentinelRef = useIntersectionObserver<HTMLDivElement>(
     () => {
@@ -37,16 +32,17 @@ export default function FeedContainer() {
     { enabled: hasNextPage, rootMargin: '200px' }
   );
 
-  if (isPending) {
-    return <FeedStatus message="피드를 불러오는 중…" />;
-  }
-  if (isError) {
-    return <FeedStatus message="피드를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." />;
-  }
-
   const posts = data.pages.flatMap((page) => page.posts);
   if (posts.length === 0) {
-    return <FeedStatus message="아직 게시물이 없습니다." />;
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex flex-1 items-center justify-center p-10 text-center text-sm text-gray-500"
+      >
+        아직 게시물이 없습니다.
+      </div>
+    );
   }
 
   return (
@@ -57,7 +53,7 @@ export default function FeedContainer() {
             key={item.id}
             className="[contain-intrinsic-size:auto_420px] [content-visibility:auto]"
           >
-            <SnsCard user={item.user} post={item.post} stats={item.stats} />
+            <SnsCard {...item} />
           </li>
         ))}
       </ul>
@@ -78,5 +74,24 @@ export default function FeedContainer() {
         <p className="p-6 text-center text-sm text-gray-500">마지막 게시물입니다.</p>
       )}
     </section>
+  );
+}
+
+/**
+ * Declarative async boundary for the feed: QueryErrorResetBoundary feeds reset into
+ * a self-implemented ErrorBoundary (no `react-error-boundary`, see ADR-004), and
+ * Suspense shows the height-matched skeleton during load.
+ */
+export default function FeedContainer() {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary onReset={reset} fallback={(retry) => <FeedError onRetry={retry} />}>
+          <Suspense fallback={<FeedSkeleton />}>
+            <FeedList />
+          </Suspense>
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   );
 }

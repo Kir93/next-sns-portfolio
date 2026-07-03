@@ -33,3 +33,18 @@ export async function createPost(input: CreatePostInput): Promise<SnsCardData> {
   const data: { post: SnsCardData } = await res.json();
   return data.post;
 }
+
+export interface ToggleLikeResult {
+  id: string;
+  liked: boolean;
+  likes: number;
+}
+
+/** Toggle a post's like. In development MSW intercepts `POST /api/posts/:id/like`. */
+export async function toggleLike(id: string): Promise<ToggleLikeResult> {
+  const res = await fetch(`/api/posts/${id}/like`, { method: 'POST' });
+  if (!res.ok) {
+    throw new Error(`Failed to toggle like: ${res.status}`);
+  }
+  return res.json() as Promise<ToggleLikeResult>;
+}

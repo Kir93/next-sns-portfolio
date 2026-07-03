@@ -28,6 +28,8 @@ export interface SnsCardData {
   user: SnsUser;
   post: SnsPost;
   stats: SnsStats;
+  /** Whether the current user has liked this post (card-level state). */
+  liked: boolean;
 }
 
 /** One page of the cursor-paginated feed. `nextCursor: null` marks the end. */

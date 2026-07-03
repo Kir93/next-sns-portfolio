@@ -1,3 +1,5 @@
+import { formatRelativeTime } from '@utils/relativeTime';
+
 import Avatar from '@components/common/Avatar';
 
 import type { SnsUser } from '@type/sns';
@@ -6,12 +8,6 @@ interface PostHeaderProps {
   user: SnsUser;
   createdAt: string;
 }
-
-const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'UTC'
-});
 
 export default function PostHeader({ user, createdAt }: PostHeaderProps) {
   return (
@@ -24,7 +20,7 @@ export default function PostHeader({ user, createdAt }: PostHeaderProps) {
           ·
         </span>
         <time dateTime={createdAt} className="text-gray-500">
-          {dateFormatter.format(new Date(createdAt))}
+          {formatRelativeTime(createdAt)}
         </time>
       </div>
     </header>
