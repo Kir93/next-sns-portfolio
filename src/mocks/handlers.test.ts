@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseFeedSize } from './handlers';
+
 import type { FeedPage } from '@type/sns';
 
 async function getPage(params: string): Promise<FeedPage> {
@@ -33,4 +35,21 @@ describe('GET /api/posts cursor pagination', () => {
     expect(posts).toEqual([]);
     expect(nextCursor).toBeNull();
   });
+});
+
+describe('parseFeedSize', () => {
+  it('정상 값을 그대로 스트레스 피드 규모로 쓴다', () => {
+    expect(parseFeedSize('?feedSize=506')).toBe(506);
+  });
+
+  it('상한 2000으로 clamp한다', () => {
+    expect(parseFeedSize('?feedSize=5000')).toBe(2000);
+  });
+
+  it.each(['', '?feedSize=', '?feedSize=0', '?feedSize=-5', '?feedSize=12.5', '?feedSize=abc'])(
+    '%s 는 null — 기존 시드 피드를 유지한다',
+    (search) => {
+      expect(parseFeedSize(search)).toBeNull();
+    }
+  );
 });

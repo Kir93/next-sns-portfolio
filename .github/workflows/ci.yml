@@ -35,3 +35,42 @@ jobs:
 
       - name: E2E tests
         run: pnpm test:e2e
+
+  # Report-only: never blocks. Absolute numbers differ per runner and several
+  # metrics have a high coefficient of variation, so a threshold gate here would
+  # be flake, not signal — see docs/perf/methodology.md.
+  #
+  # main push only. Running it on every pull_request would spend ~3 minutes per
+  # dependabot bump on a report nobody reads, and it would mix branch runs into
+  # the one comparison the methodology sanctions: successive runs on main.
+  perf-report:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Measure
+        run: pnpm perf
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: perf-results/
+          # The job stays non-blocking, but a run that produced no report must
+          # not look the same as one that did.
+          if-no-files-found: error

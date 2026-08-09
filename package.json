@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "perf": "node scripts/perf.mjs",
     "depcheck": "npx depcheck",
     "svgo": "npx svgo -f public/svgs",
     "prepare": "husky install",

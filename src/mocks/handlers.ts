@@ -3,12 +3,42 @@ import { http, HttpResponse } from 'msw';
 import { CURRENT_USER } from '@lib/current-user';
 import { createPostSchema } from '@lib/schemas/post';
 
+import { generateFeed } from './data/generateFeed';
 import { posts as seedPosts } from './data/posts';
 
 import type { SnsCardData } from '@type/sns';
 
+/** Upper bound so a stray `?feedSize=1e9` cannot lock up the demo. */
+const MAX_FEED_SIZE = 2000;
+
+/**
+ * Reads the `?feedSize=N` stress-feed size, clamped to {@link MAX_FEED_SIZE}.
+ * Returns `null` for an absent, malformed, or non-positive value so the caller
+ * keeps the original seed feed — the default URL stays byte-identical.
+ */
+export function parseFeedSize(search: string): number | null {
+  const raw = new URLSearchParams(search).get('feedSize');
+  if (raw === null) return null;
+
+  const size = Number(raw);
+  if (!Number.isInteger(size) || size <= 0) return null;
+
+  return Math.min(size, MAX_FEED_SIZE);
+}
+
+/**
+ * Resolved once, when this module is first evaluated. Changing `?feedSize`
+ * therefore needs a fresh page load — which is how the perf harness navigates.
+ */
+function resolveInitialFeed(): SnsCardData[] {
+  if (typeof location === 'undefined') return [...seedPosts];
+
+  const size = parseFeedSize(location.search);
+  return size === null ? [...seedPosts] : generateFeed(size);
+}
+
 /** In-memory feed so a created post survives the success-driven refetch. */
-let feed: SnsCardData[] = [...seedPosts];
+let feed: SnsCardData[] = resolveInitialFeed();
 let nextId = 1;
 
 export const handlers = [

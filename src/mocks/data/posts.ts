@@ -1,7 +1,7 @@
 import type { SnsCardData } from '@type/sns';
 
-const img = (seed: string) => `https://picsum.photos/seed/${seed}/700/700`;
-const avatar = (seed: string) => `https://picsum.photos/seed/${seed}/96/96`;
+export const img = (seed: string) => `https://picsum.photos/seed/${seed}/700/700`;
+export const avatar = (seed: string) => `https://picsum.photos/seed/${seed}/96/96`;
 
 /**
  * Featured posts covering every ImageGrid variation (0/1/2/3/4/5+ images).
