@@ -3,6 +3,8 @@
 const nextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
+  agentRules: false,
+  agentRules: false,
   transpilePackages: ['zustand'],
   experimental: {
     optimizePackageImports: ['lucide-react']
