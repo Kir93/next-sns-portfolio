@@ -9,3 +9,11 @@ updates:
     directory: '/'
     schedule:
       interval: 'weekly'
+
+  # Without this, action versions drift silently: npm bumps land weekly while
+  # the workflow stays pinned to whatever major it was written against, until a
+  # runner deprecation surfaces it.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
