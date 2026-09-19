@@ -18,6 +18,11 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: !isPerfRun && process.env.CI ? 2 : 0,
   workers: isPerfRun ? 1 : undefined,
+  // The perf specs wait for a 506-card feed under a 4x CPU throttle, and nothing is
+  // in the DOM until the MSW worker starts (`src/provider/MswProvider.tsx`), so that
+  // wait runs 2-5s on a shared runner — Playwright's 5s default sits inside the
+  // distribution and drops the measurement. Matches the interaction poll's 30s.
+  expect: { timeout: isPerfRun ? 30_000 : undefined },
   reporter: 'list',
   use: {
     baseURL: isPerfRun ? `http://localhost:${PERF_PORT}` : 'http://localhost:3000',
