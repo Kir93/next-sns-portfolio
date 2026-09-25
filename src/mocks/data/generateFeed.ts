@@ -9,7 +9,7 @@ import type { SnsCardData } from '@type/sns';
  */
 
 /** mulberry32 — 32-bit seeded PRNG, small enough to keep the dependency count at zero (ADR-003). */
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   let state = seed | 0;
   return () => {
     state = (state + 0x6d2b79f5) | 0;

@@ -10,9 +10,14 @@ let workerStarted: Promise<unknown> | null = null;
 
 function startWorkerOnce() {
   if (!workerStarted) {
-    workerStarted = import('../mocks/browser').then(({ worker }) =>
-      worker.start({ onUnhandledRequest: 'bypass' })
-    );
+    workerStarted = import('../mocks/browser')
+      .then(({ worker }) => worker.start({ onUnhandledRequest: 'bypass' }))
+      .then(async () => {
+        // Stress mode only (`?tick=Hz`): the default URL never loads the tick engine.
+        if (!new URLSearchParams(location.search).has('tick')) return;
+        const { startTickEngine } = await import('../mocks/tick/applyTicks');
+        startTickEngine(location.search);
+      });
   }
   return workerStarted;
 }

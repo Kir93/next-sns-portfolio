@@ -36,7 +36,9 @@ function StatButton({ icon, label, count }: { icon: LucideIcon; label: string; c
 export default function PostActions({ postId, liked, stats }: PostActionsProps) {
   const toggleLike = useToggleLike(postId);
   // A just-composed optimistic card has no server id yet — guard its like button.
-  const disabled = postId.startsWith('temp-') || toggleLike.isPending;
+  // No in-flight guard: repeated taps stay responsive and the last one wins, since
+  // the hook serializes requests and skips intents the server already matches.
+  const disabled = postId.startsWith('temp-');
 
   return (
     <div className="flex items-center justify-between pt-1 text-gray-500">

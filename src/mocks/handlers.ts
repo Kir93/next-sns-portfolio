@@ -41,6 +41,16 @@ function resolveInitialFeed(): SnsCardData[] {
 let feed: SnsCardData[] = resolveInitialFeed();
 let nextId = 1;
 
+/**
+ * The live feed the handlers serve. A function rather than an exported binding:
+ * `POST /api/posts` reassigns `feed`, so a captured reference would go stale.
+ * The tick engine mutates these same post objects, which keeps the handlers the
+ * single source of truth for counts.
+ */
+export function getFeed(): readonly SnsCardData[] {
+  return feed;
+}
+
 export const handlers = [
   http.get('/api/posts', ({ request }) => {
     const url = new URL(request.url);

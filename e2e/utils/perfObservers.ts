@@ -1,3 +1,4 @@
+import type { TickEngineStats, TickEngineWindow } from '../../src/mocks/tick/instrumentation';
 import type { Page } from '@playwright/test';
 
 /**
@@ -43,6 +44,27 @@ export interface LongTaskStats {
   max: number | null;
 }
 
+/**
+ * Tick throughput and cost over the interaction phase. The nominal rate is what
+ * the URL asked for; `perSecond` is what the main thread actually delivered, which
+ * falls below nominal under CPU throttling even without feed load.
+ */
+export interface TickMetrics {
+  nominalHz: number;
+  delivered: number;
+  perSecond: number;
+  /** Server side: tick applied to the MSW feed. */
+  feedMsPerTick: number | null;
+  /** Client side: cache ingestion (`setQueryData`) of that tick. */
+  ingestMsPerTick: number | null;
+  /** Cache writes by ingestion — one per tick unless ticks were merged. */
+  commits: number;
+  /** Commits that carried more than one tick. */
+  mergedCommits: number;
+  /** Yielding commits redone on a cache that changed during the yields. */
+  rebases: number;
+}
+
 /** `null` marks "no data", never "measured as zero" — see {@link MIN_INTERACTION_SAMPLE}. */
 export interface PerfMetrics {
   interaction: { count: number; p75: number | null; max: number | null };
@@ -51,6 +73,8 @@ export interface PerfMetrics {
   /** Long tasks up to first paint — feed generation and initial render. */
   loadLongTask: LongTaskStats;
   commits: CommitCounts;
+  /** `null` when the run had no ticks. */
+  tick: TickMetrics | null;
 }
 
 /** `durationThreshold` is `event`-only and absent from the base DOM typing. */
@@ -207,6 +231,61 @@ export async function readCommitCount(page: Page): Promise<number> {
   return page.evaluate(() => (window as CommitWindow).__commits ?? 0);
 }
 
+export interface TickReading extends TickEngineStats {
+  /** Page clock at the read, so two readings give the elapsed time between them. */
+  at: number;
+}
+
+/** Cumulative tick-engine counters, or `null` when the page is not in tick mode. */
+export async function readTickStats(page: Page): Promise<TickReading | null> {
+  return page.evaluate(() => {
+    const engine = (window as TickEngineWindow).__tickEngine;
+    return engine ? { ...engine.stats, at: performance.now() } : null;
+  });
+}
+
+/**
+ * Stops the tick stream and returns the counters at that instant, in one
+ * evaluation so no tick can land between the read and the stop. Required before
+ * the commit-settle wait: ticks keep committing, so the "two equal samples" end
+ * condition would never hold.
+ */
+export async function stopTicks(page: Page): Promise<TickReading | null> {
+  return page.evaluate(() => {
+    const engine = (window as TickEngineWindow).__tickEngine;
+    if (!engine) return null;
+    engine.stop();
+    return { ...engine.stats, at: performance.now() };
+  });
+}
+
+/**
+ * `stopped` fixes the delivery window (ticks and elapsed time up to the stop);
+ * `drained` is read once ingestion went idle, so the cost and commit counters
+ * cover exactly the ticks that were delivered — yielding modes can still be
+ * mid-drain at the stop.
+ */
+export function tickMetrics(
+  nominalHz: number,
+  from: TickReading,
+  stopped: TickReading,
+  drained: TickReading
+): TickMetrics {
+  const delivered = stopped.ticks - from.ticks;
+  const perTick = (total: number) => (delivered > 0 ? round(total / delivered) : null);
+  const to = drained;
+  return {
+    nominalHz,
+    delivered,
+    perSecond: round(delivered / ((stopped.at - from.at) / 1000)),
+    feedMsPerTick: perTick(to.feedMs - from.feedMs),
+    ingestMsPerTick: perTick(to.ingestMs - from.ingestMs),
+    commits: to.commits - from.commits,
+    mergedCommits: to.mergedCommits - from.mergedCommits,
+    rebases: to.rebases - from.rebases
+  };
+}
+
 export async function readPerfSample(page: Page): Promise<PerfSample> {
   return page.evaluate(() => (window as PerfWindow).__perf ?? { interactions: [], longTasks: [] });
 }
@@ -228,11 +307,13 @@ function longTaskStats(durations: number[]): LongTaskStats {
 export function summarize(
   sample: PerfSample,
   loadSample: PerfSample,
-  commits: CommitCounts
+  commits: CommitCounts,
+  tick: TickMetrics | null = null
 ): PerfMetrics {
   const { interactions, longTasks } = sample;
   return {
     commits,
+    tick,
     interaction: {
       count: interactions.length,
       p75: interactions.length >= MIN_INTERACTION_SAMPLE ? round(p75(interactions)) : null,

@@ -102,26 +102,83 @@ if (!existsSync(INTERACTION_REPORT)) {
   process.exit(1);
 }
 
-const { runs, conditions, limits } = JSON.parse(readFileSync(INTERACTION_REPORT, 'utf8'));
+const { groups, conditions, limits } = JSON.parse(readFileSync(INTERACTION_REPORT, 'utf8'));
 const commit = currentCommit();
 const [cpu] = cpus();
 
 // 인터랙션 구간 지표가 본체다. 로드 구간은 부하 생성기 오버헤드가 인터랙션
-// 수치에 섞이지 않았음을 보이는 참고 행으로만 싣는다.
-const metrics = {
-  'interaction p75 (ms)': aggregate(runs, (run) => run.interaction.p75),
-  'interaction max (ms)': aggregate(runs, (run) => run.interaction.max),
-  'interaction 관측 건수': aggregate(runs, (run) => run.interaction.count),
-  'long task 총합 (ms)': aggregate(runs, (run) => run.longTask.total),
-  'long task 최대 (ms)': aggregate(runs, (run) => run.longTask.max),
-  'long task 건수': aggregate(runs, (run) => run.longTask.count),
-  'React commit (초기 로드)': aggregate(runs, (run) => run.commits.load),
-  'React commit (인터랙션)': aggregate(runs, (run) => run.commits.interaction),
-  '〔참고〕 로드 구간 long task 총합 (ms)': aggregate(runs, (run) => run.loadLongTask.total),
-  '〔참고〕 로드 구간 long task 건수': aggregate(runs, (run) => run.loadLongTask.count)
-};
+// 수치에 섞이지 않았음을 보이는 참고 행으로만 싣는다. 틱 행은 틱 조건에만 있다.
+function groupMetrics(runs) {
+  const metrics = {
+    'interaction p75 (ms)': aggregate(runs, (run) => run.interaction.p75),
+    'interaction max (ms)': aggregate(runs, (run) => run.interaction.max),
+    'interaction 관측 건수': aggregate(runs, (run) => run.interaction.count),
+    'long task 총합 (ms)': aggregate(runs, (run) => run.longTask.total),
+    'long task 최대 (ms)': aggregate(runs, (run) => run.longTask.max),
+    'long task 건수': aggregate(runs, (run) => run.longTask.count),
+    'React commit (초기 로드)': aggregate(runs, (run) => run.commits.load),
+    'React commit (인터랙션)': aggregate(runs, (run) => run.commits.interaction)
+  };
+  if (runs.some((run) => run.tick)) {
+    Object.assign(metrics, {
+      '틱 전달률 (/s)': aggregate(runs, (run) => run.tick?.perSecond),
+      '틱당 feed 변이 (ms, 서버 측)': aggregate(runs, (run) => run.tick?.feedMsPerTick),
+      '틱당 ingestion (ms, 캐시 반영)': aggregate(runs, (run) => run.tick?.ingestMsPerTick),
+      '캐시 commit 수 (ingestion)': aggregate(runs, (run) => run.tick?.commits),
+      '병합 commit 수 (틱 2건 이상)': aggregate(runs, (run) => run.tick?.mergedCommits),
+      'rebase 수 (yield 중 캐시 변경)': aggregate(runs, (run) => run.tick?.rebases)
+    });
+  }
+  return Object.assign(metrics, {
+    '〔참고〕 로드 구간 long task 총합 (ms)': aggregate(runs, (run) => run.loadLongTask.total),
+    '〔참고〕 로드 구간 long task 건수': aggregate(runs, (run) => run.loadLongTask.count)
+  });
+}
 
-const p75Samples = runs.filter((run) => run.interaction.p75 !== null).length;
+const groupLines = groups.flatMap((group) => {
+  const { runs } = group;
+  const p75Samples = runs.filter((run) => run.interaction.p75 !== null).length;
+  const hasTick = runs.some((run) => run.tick);
+  return [
+    `## 조건: ${group.label}`,
+    '',
+    `- 피드 규모: 요청 ${group.feedSize} / 실제 서빙 ${group.feedSizeServed} · 틱: ${group.tickHz > 0 ? `명목 ${group.tickHz}Hz` : 'off'}`,
+    `- 반복: ${runs.length}/${conditions.repeat}회 완료 (warm-up ${conditions.warmupRuns ?? 0}회 폐기) · p75 산출 회차 ${p75Samples}/${runs.length}`,
+    '',
+    '| 지표 | 값 |',
+    '| --- | --- |',
+    ...Object.entries(groupMetrics(runs)).map(
+      ([name, stat]) => `| ${name} | ${formatCell(stat)} |`
+    ),
+    '',
+    `| # | long task 총합 | long task 최대 | long task 건수 | interaction 관측 | interaction p75 | interaction max |${hasTick ? ' 틱 전달 (건 / 초당) |' : ''} 〔참고〕 로드 long task |`,
+    `| --- | --- | --- | --- | --- | --- | --- |${hasTick ? ' --- |' : ''} --- |`,
+    ...runs.map(
+      (run, index) =>
+        `| ${index + 1} | ${run.longTask.total} | ${run.longTask.max ?? '—'} | ${run.longTask.count} | ${run.interaction.count} | ${run.interaction.p75 ?? '—'} | ${run.interaction.max ?? '—'} |${hasTick ? ` ${run.tick ? `${run.tick.delivered} / ${run.tick.perSecond}` : '—'} |` : ''} ${run.loadLongTask.total} (${run.loadLongTask.count}건) |`
+    ),
+    ''
+  ];
+});
+
+// 같은 실행 안의 조건 비교 — methodology가 인정하는 유일한 A/B 형태다.
+const comparisonLines =
+  groups.length > 1
+    ? [
+        '## 조건 비교 (중앙값)',
+        '',
+        '| 조건 | interaction p75 | long task 건수 | React commit (인터랙션) | 틱 전달률 (/s) | 캐시 commit (ingestion) |',
+        '| --- | --- | --- | --- | --- | --- |',
+        ...groups.map((group) => {
+          const cell = (pick) => {
+            const stat = aggregate(group.runs, pick);
+            return stat.samples === 0 ? '—' : `${stat.median}`;
+          };
+          return `| ${group.label} | ${cell((run) => run.interaction.p75)} | ${cell((run) => run.longTask.count)} | ${cell((run) => run.commits.interaction)} | ${cell((run) => run.tick?.perSecond)} | ${cell((run) => run.tick?.commits)} |`;
+        }),
+        ''
+      ]
+    : [];
 
 const lines = [
   '# perf 리포트',
@@ -134,30 +191,18 @@ const lines = [
     : []),
   `- 커밋: \`${commit}\``,
   `- 러너: ${platform()} ${release()} / ${arch()} / ${cpu?.model ?? 'unknown CPU'} × ${cpus().length}${process.env.CI ? ' (CI)' : ' (로컬)'}`,
-  `- 피드 규모: 요청 ${conditions.feedSizeRequested} / 실제 서빙 ${conditions.feedSizeServed} (seed \`${conditions.feedSeed}\`)`,
+  `- 시나리오: \`${conditions.name}\` · seed \`${conditions.feedSeed}\` · 틱 대상 비율 ${conditions.tickRatio}`,
   `- CPU throttle: ${conditions.cpuThrottleRate}x · 빌드: ${conditions.buildMode} · 원격 이미지: ${conditions.remoteImages}`,
-  `- 반복: ${conditions.completedRuns ?? runs.length}/${conditions.repeat}회 완료 (warm-up ${conditions.warmupRuns ?? 0}회 폐기) · 회차당 좋아요 탭 ${conditions.likeTapsPerRun}회(인덱스 ${conditions.tapOffset}부터)`,
+  `- 회차당 좋아요 탭 ${conditions.likeTapsPerRun}회(인덱스 ${conditions.tapOffset}부터)`,
   '',
-  '## 지표 (중앙값, 변동 계수)',
-  '',
-  '| 지표 | 값 |',
-  '| --- | --- |',
-  ...Object.entries(metrics).map(([name, stat]) => `| ${name} | ${formatCell(stat)} |`),
-  '',
-  '## 회차별 원시값',
-  '',
-  '| # | long task 총합 | long task 최대 | long task 건수 | interaction 관측 | interaction p75 | interaction max | 〔참고〕 로드 long task |',
-  '| --- | --- | --- | --- | --- | --- | --- | --- |',
-  ...runs.map(
-    (run, index) =>
-      `| ${index + 1} | ${run.longTask.total} | ${run.longTask.max ?? '—'} | ${run.longTask.count} | ${run.interaction.count} | ${run.interaction.p75 ?? '—'} | ${run.interaction.max ?? '—'} | ${run.loadLongTask.total} (${run.loadLongTask.count}건) |`
-  ),
-  '',
+  ...comparisonLines,
+  ...groupLines,
   '## 해석 한계',
   '',
   `- event timing 하한 ${limits.eventDurationThresholdMs}ms · 8ms 양자화 — 회차당 시도한 ${limits.attemptedInteractionsPerRun}건 중 이 하한을 넘은 것만 관측된다.`,
-  `- p75는 표본 ${limits.minInteractionSample}건 이상일 때만 산출한다 (이번 실행에서 산출된 회차: ${p75Samples}/${runs.length}).`,
+  `- p75는 표본 ${limits.minInteractionSample}건 이상일 때만 산출한다.`,
   `- 관측값이 ${limits.eventDurationThresholdMs}ms 하한에 몰리면 CV가 0%로 나온다. 이는 결정론이 아니라 해상도 아래라 분산이 보이지 않는다는 뜻이다.`,
+  '- 틱 전달률은 명목 Hz가 아니라 탭 구간에 실제 실행된 틱 수다. CPU throttle만으로도 명목보다 낮아지므로, 같은 실행의 무부하 틱 조건과 비교해 읽는다.',
   '- 절대값은 러너 환경에 종속된다. 같은 러너 안에서의 상대 비교만 유효하다.'
 ];
 
