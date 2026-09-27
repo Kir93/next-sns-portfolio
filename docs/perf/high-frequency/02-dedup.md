@@ -68,7 +68,7 @@
 | 단위 테스트 | vitest 5.0.1, jsdom, MSW node 서버(브라우저와 같은 핸들러)                                                                                |
 | e2e         | Playwright 1.62.1 chromium, Pixel 5 에뮬레이션, **개발 서버**(`pnpm dev`) — 정합은 빌드 모드와 무관한 동작이라 기본 e2e 프로젝트에서 잰다 |
 | 커밋 카운트 | production 빌드, `pnpm perf` 기본 시나리오                                                                                                |
-| 측정 시점   | `8f7664f-dirty` — 이 리포트와 같은 커밋에 들어가는 변경이 작업 트리에 있는 상태                                                           |
+| 측정 시점   | `f1edff5` (미커밋 변경 없음). 2026-09-26 이 커밋에서 다시 실행: vitest 69건·e2e 5건 통과, 기본 perf 인터랙션 commit 40 (5/5)              |
 
 ## 한계
 
@@ -89,4 +89,4 @@ pnpm perf
 
 `pnpm test`에는 경합 단위 테스트(`app/_components/sns/SnsCard/useToggleLike.test.ts`의 "틱 스트림과의 경합")와 재동기화 테스트가 들어 있다. `pnpm test:e2e`에는 `e2e/like-tick-consistency.spec.ts`가 들어 있다. 탭당 커밋 수는 `pnpm perf` 요약의 "React commit (인터랙션)" 행에서 본다.
 
-측정일: 2026-09-25.
+측정일: 2026-09-25 (커밋 후 재확인 2026-09-26).
