@@ -34,7 +34,7 @@
     "react-dom": "19.3.0",
     "react-hook-form": "7.88.0",
     "tailwind-merge": "3.7.0",
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
