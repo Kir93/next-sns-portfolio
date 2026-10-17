@@ -6,13 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
-import { MAX_CONTENT, contentField } from '@lib/schemas/post';
+import { MAX_CONTENT, contentField, imageUrlField } from '@lib/schemas/post';
 
 import { useCreatePost } from './useCreatePost';
 
 const composeSchema = z.object({
   content: contentField,
-  imageUrl: z.union([z.literal(''), z.url('올바른 이미지 URL이 아닙니다.')])
+  imageUrl: z.union([z.literal(''), imageUrlField])
 });
 
 type ComposeForm = z.infer<typeof composeSchema>;
@@ -67,7 +67,7 @@ export default function PostComposer() {
         inputMode="url"
         autoComplete="off"
         spellCheck={false}
-        placeholder="https://example.com/image.jpg"
+        placeholder="https://picsum.photos/seed/demo/700/700"
         className="w-full rounded-md bg-gray-100 px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         {...register('imageUrl')}
       />
