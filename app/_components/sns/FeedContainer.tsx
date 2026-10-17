@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 
-import { QueryErrorResetBoundary } from '@tanstack/react-query';
+import { QueryErrorResetBoundary, useIsMutating } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
 import { useIntersectionObserver } from '@utils/useIntersectionObserver';
@@ -12,6 +12,7 @@ import ErrorBoundary from '@components/common/ErrorBoundary';
 import FeedError from './FeedError';
 import FeedSkeleton from './FeedSkeleton';
 import SnsCard from './SnsCard';
+import { TOGGLE_LIKE_KEY } from './SnsCard/useToggleLike';
 import { useInfiniteFeed } from './useInfiniteFeed';
 
 /**
@@ -22,6 +23,7 @@ import { useInfiniteFeed } from './useInfiniteFeed';
  */
 function FeedList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteFeed();
+  const likePending = useIsMutating({ mutationKey: [TOGGLE_LIKE_KEY] }) > 0;
 
   const sentinelRef = useIntersectionObserver<HTMLDivElement>(
     () => {
@@ -29,7 +31,12 @@ function FeedList() {
         void fetchNextPage();
       }
     },
-    { enabled: hasNextPage, rootMargin: '200px' }
+    // Re-armed after every page fetch ends: the observer only fires on an
+    // intersection change, so a fetch that was cancelled (a like tap) or that left
+    // the sentinel still in view would otherwise never load the next page. Held off
+    // while a like toggle is pending: a page fetch appends to the cache snapshot
+    // taken at its start, so one landing after the toggle settles would undo it.
+    { enabled: hasNextPage && !isFetchingNextPage && !likePending, rootMargin: '200px' }
   );
 
   const posts = data.pages.flatMap((page) => page.posts);

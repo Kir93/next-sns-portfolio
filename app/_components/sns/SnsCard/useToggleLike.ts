@@ -45,6 +45,13 @@ const readPost = (client: QueryClient, id: string) =>
 export const TOGGLE_LIKE_KEY = 'toggle-like';
 
 /**
+ * Clients owing a whole-feed refetch that a tap cancelled. Shared across cards so
+ * the last toggle to settle runs it: a refetch started while another toggle is
+ * pending could land after that toggle settles and overwrite its corrected card.
+ */
+const owedFeedRefetch = new WeakSet<QueryClient>();
+
+/**
  * Like toggle that stays consistent under a live tick stream. Three rules decide
  * who wins each field:
  * - `liked` shows the user's latest intent. Requests for one post run one at a
@@ -62,7 +69,8 @@ export const TOGGLE_LIKE_KEY = 'toggle-like';
  * server's `liked` — a no-op unless something overwrote it. The response's count
  * is never written back: it can be older than a tick that landed after the
  * server processed the request. Still no `onSettled` invalidate — a single card
- * must not refetch the feed.
+ * must not refetch the feed; it only re-runs a refetch a tap cancelled, once no
+ * toggle is left pending.
  */
 export function useToggleLike(postId: string) {
   const queryClient = useQueryClient();
@@ -97,6 +105,14 @@ export function useToggleLike(postId: string) {
       intent.current = confirmed.current;
     },
     onSettled: () => {
+      // This toggle still counts as pending here, so 1 means it is the last one.
+      if (
+        owedFeedRefetch.has(queryClient) &&
+        queryClient.isMutating({ mutationKey: [TOGGLE_LIKE_KEY] }) === 1
+      ) {
+        owedFeedRefetch.delete(queryClient);
+        void queryClient.refetchQueries({ queryKey: FEED_QUERY_KEY });
+      }
       const server = confirmed.current;
       if (server === null || intent.current !== server) return;
       if (readPost(queryClient, postId)?.liked !== server) showLiked(server);
@@ -109,6 +125,13 @@ export function useToggleLike(postId: string) {
     confirmed.current ??= post.liked;
     intent.current = !(intent.current ?? post.liked);
     // A feed fetch resolving later would rebuild pages from its start snapshot.
+    // A cancelled whole-feed refetch (a new post's invalidate, a stale remount) is
+    // owed and re-run when the last toggle settles; a cancelled `fetchNextPage` is
+    // re-armed by the feed's sentinel instead.
+    const feed = queryClient.getQueryState(FEED_QUERY_KEY);
+    if (feed?.fetchStatus === 'fetching' && !feed.fetchMeta?.fetchMore) {
+      owedFeedRefetch.add(queryClient);
+    }
     void queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
     showLiked(intent.current);
     mutation.mutate();

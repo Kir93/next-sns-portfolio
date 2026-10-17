@@ -2,12 +2,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createPost, getPostsPage } from '../../../../src/api/post/post';
 import { getFeed } from '../../../../src/mocks/handlers';
 import { server } from '../../../../src/mocks/server';
 import { applyTickToFeed, ingestTick } from '../../../../src/mocks/tick/applyTicks';
 import { createTestQueryClient, createWrapper } from '../../../../src/test/react-query';
 import { FEED_QUERY_KEY } from '../useInfiniteFeed';
-import { mapPost, useToggleLike } from './useToggleLike';
+import { mapPost, TOGGLE_LIKE_KEY, useToggleLike } from './useToggleLike';
 
 import type { QueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
@@ -111,6 +112,74 @@ describe('useToggleLike', () => {
     expect(getPost(client, 'p2')?.liked).toBe(false);
     expect(getPost(client, 'p2')?.stats.likes).toBe(5);
     expect(invalidate).not.toHaveBeenCalled();
+  });
+
+  it('탭이 취소한 피드 refetch는 토글이 끝난 뒤 다시 실행돼 서버 카드로 바뀐다', async () => {
+    const client = createTestQueryClient();
+    await client.fetchInfiniteQuery({
+      queryKey: FEED_QUERY_KEY,
+      queryFn: ({ pageParam }: { pageParam: string | null }) =>
+        getPostsPage({ cursor: pageParam, limit: 6 }),
+      initialPageParam: null
+    });
+    // A post was just created: the optimistic card is in the cache, the server has
+    // the real one, and the create mutation's invalidate refetch is in flight.
+    const created = await createPost({ content: '방금 쓴 글' });
+    client.setQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY, (old) =>
+      old
+        ? {
+            ...old,
+            pages: [{ ...old.pages[0], posts: [card('temp-1', false, 0), ...old.pages[0].posts] }]
+          }
+        : old
+    );
+    const { Wrapper } = createWrapper(client);
+    const { result } = renderHook(() => useToggleLike('p1'), { wrapper: Wrapper });
+
+    void client.refetchQueries({ queryKey: FEED_QUERY_KEY });
+    act(() => result.current.mutate());
+
+    await waitFor(() => {
+      const first = client.getQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY)?.pages[0].posts[0];
+      expect(first?.id).toBe(created.id);
+    });
+    expect(getPost(client, 'temp-1')).toBeUndefined();
+  });
+
+  it('탭이 취소한 피드 refetch는 다른 카드 토글이 남아 있으면 마지막 토글이 끝난 뒤 실행한다', async () => {
+    const client = createTestQueryClient();
+    await client.fetchInfiniteQuery({
+      queryKey: FEED_QUERY_KEY,
+      queryFn: ({ pageParam }: { pageParam: string | null }) =>
+        getPostsPage({ cursor: pageParam, limit: 6 }),
+      initialPageParam: null
+    });
+    // Hold p2's request; returning nothing falls through to the default handler.
+    let releaseP2 = () => {};
+    const p2Gate = new Promise<void>((resolve) => (releaseP2 = resolve));
+    server.use(
+      http.post('/api/posts/:id/like', async ({ params }) => {
+        if (params.id === 'p2') await p2Gate;
+      })
+    );
+    const { Wrapper } = createWrapper(client);
+    const { result } = renderHook(() => ({ p1: useToggleLike('p1'), p2: useToggleLike('p2') }), {
+      wrapper: Wrapper
+    });
+
+    act(() => result.current.p2.mutate());
+    void client.refetchQueries({ queryKey: FEED_QUERY_KEY });
+    const refetch = vi.spyOn(client, 'refetchQueries');
+    act(() => result.current.p1.mutate());
+
+    // p1 settles while p2 is still pending: a refetch now could land after p2 settles.
+    await waitFor(() =>
+      expect(client.isMutating({ mutationKey: [TOGGLE_LIKE_KEY, 'p1'] })).toBe(0)
+    );
+    expect(refetch).not.toHaveBeenCalled();
+
+    releaseP2();
+    await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
   });
 });
 
