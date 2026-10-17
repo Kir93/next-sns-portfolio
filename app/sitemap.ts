@@ -1,6 +1,6 @@
-import type { MetadataRoute } from 'next';
+import { siteUrl } from '@configs/site';
 
-const siteUrl = process.env.NEXT_PUBLIC_DOMAIN_URL || 'http://localhost:3000';
+import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
