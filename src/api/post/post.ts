@@ -1,7 +1,7 @@
 import type { CreatePostInput } from '@lib/schemas/post';
 import type { FeedPage, SnsCardData } from '@type/sns';
 
-/** Fetch one cursor page of the feed. In development MSW intercepts `GET /api/posts`. */
+/** Fetch one cursor page of the feed. MSW intercepts `GET /api/posts`. */
 export async function getPostsPage({
   cursor,
   limit = 10
@@ -20,7 +20,7 @@ export async function getPostsPage({
   return res.json() as Promise<FeedPage>;
 }
 
-/** Create a post. In development MSW intercepts `POST /api/posts`. */
+/** Create a post. MSW intercepts `POST /api/posts`. */
 export async function createPost(input: CreatePostInput): Promise<SnsCardData> {
   const res = await fetch('/api/posts', {
     method: 'POST',
@@ -40,7 +40,7 @@ export interface ToggleLikeResult {
   likes: number;
 }
 
-/** Toggle a post's like. In development MSW intercepts `POST /api/posts/:id/like`. */
+/** Toggle a post's like. MSW intercepts `POST /api/posts/:id/like`. */
 export async function toggleLike(id: string): Promise<ToggleLikeResult> {
   const res = await fetch(`/api/posts/${id}/like`, { method: 'POST' });
   if (!res.ok) {
