@@ -38,7 +38,8 @@ Next.js 16 · React 19 · TypeScript · Tailwind v4 · TanStack Query · React H
 ```bash
 pnpm install
 pnpm dev      # MSW 활성
-pnpm test     # Vitest / Playwright
+pnpm test     # Vitest
+pnpm test:e2e # Playwright
 ```
 
 > 설계 결정은 [docs/decisions](docs/decisions/), 성능 실측은 [docs/perf/baseline.md](docs/perf/baseline.md)에 정리해 두었습니다.
