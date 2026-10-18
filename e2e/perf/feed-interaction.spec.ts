@@ -48,6 +48,8 @@ interface PerfCondition {
   tickHz: number;
   /** Ingestion mode for tick conditions (`?sched`); absent = the app default, `off`. */
   sched?: 'off' | 'yield' | 'raf' | 'both';
+  /** `list` = the list passes every card its post (`?subscribe=list`); absent = per-card subscription. */
+  subscribe?: 'list';
 }
 
 /**
@@ -70,6 +72,14 @@ const SCENARIOS: Record<string, PerfCondition[]> = {
     { label: 'sched=yield', feedSize: 2000, tickHz: 20, sched: 'yield' },
     { label: 'sched=raf', feedSize: 2000, tickHz: 20, sched: 'raf' },
     { label: 'sched=both', feedSize: 2000, tickHz: 20, sched: 'both' }
+  ],
+  subscription: [
+    { label: '틱 off · 목록 구독', feedSize: 2000, tickHz: 0, subscribe: 'list' },
+    { label: '틱 off · 카드 구독', feedSize: 2000, tickHz: 0 },
+    { label: 'raf · 목록 구독', feedSize: 2000, tickHz: 20, sched: 'raf', subscribe: 'list' },
+    { label: 'raf · 카드 구독', feedSize: 2000, tickHz: 20, sched: 'raf' },
+    { label: 'both · 목록 구독', feedSize: 2000, tickHz: 20, sched: 'both', subscribe: 'list' },
+    { label: 'both · 카드 구독', feedSize: 2000, tickHz: 20, sched: 'both' }
   ]
 };
 
@@ -121,6 +131,7 @@ test('스트레스 피드에서 interaction latency와 long task를 반복 측�
     const params = new URLSearchParams({ feedSize: String(condition.feedSize) });
     if (condition.tickHz > 0) params.set('tick', String(condition.tickHz));
     if (condition.sched) params.set('sched', condition.sched);
+    if (condition.subscribe) params.set('subscribe', condition.subscribe);
     const url = `/?${params.toString()}`;
     const report: ConditionReport = { ...condition, feedSizeServed: 0, runs: [] };
     reports.push(report);

@@ -1,11 +1,16 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import FeedContainer from './FeedContainer';
+import { mapPost } from './SnsCard/useToggleLike';
+import { FEED_QUERY_KEY } from './useInfiniteFeed';
 import { server } from '../../../src/mocks/server';
 import { createWrapper } from '../../../src/test/react-query';
+
+import type { InfiniteData } from '@tanstack/react-query';
+import type { FeedPage } from '@type/sns';
 
 describe('FeedContainer 비동기 경계', () => {
   it('로딩 중 스켈레톤(role=status)을 보여주고, 로드되면 피드로 전환된다', async () => {
@@ -103,5 +108,52 @@ describe('FeedContainer 무한스크롤 sentinel', () => {
     await waitFor(() => expect(callbacks.length).toBeGreaterThan(observersBefore));
     act(() => intersect());
     await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(12));
+  });
+});
+
+describe('FeedContainer 카드 구독 경계', () => {
+  // jsdom has no content-visibility; the test plays the browser's part.
+  class SkipEvent extends Event {
+    constructor(readonly skipped: boolean) {
+      super('contentvisibilityautostatechange');
+    }
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('브라우저가 건너뛰는 카드는 카운트 갱신을 받지 않고, 다시 보이면 최신값으로 따라잡는다', async () => {
+    vi.stubGlobal('ContentVisibilityAutoStateChangeEvent', SkipEvent);
+    const { client, Wrapper } = createWrapper();
+    render(<FeedContainer />, { wrapper: Wrapper });
+    const feed = await screen.findByRole('region', { name: '피드' });
+    const [card, control] = feed.querySelectorAll('li');
+
+    const likeButton = () => within(card).getByRole('button', { name: /^좋아요/ });
+    // The MSW feed outlives each test, so read the count instead of assuming the seed's.
+    const before = likeButton().getAttribute('aria-label');
+
+    act(() => {
+      card.dispatchEvent(new SkipEvent(true));
+    });
+    act(() => {
+      client.setQueryData<InfiniteData<FeedPage>>(FEED_QUERY_KEY, (old) =>
+        // The first two seed posts — `card` and `control`.
+        ['p1', 'p2'].reduce(
+          (data, id) =>
+            mapPost(data, id, (post) => ({
+              ...post,
+              stats: { ...post.stats, likes: 500 }
+            })),
+          old
+        )
+      );
+    });
+    // Cache notifications are async: the visible card updating proves one went out.
+    expect(await within(control).findByRole('button', { name: '좋아요 500' })).toBeInTheDocument();
+    expect(likeButton()).toHaveAttribute('aria-label', before);
+
+    act(() => {
+      card.dispatchEvent(new SkipEvent(false));
+    });
+    expect(await within(card).findByRole('button', { name: '좋아요 500' })).toBeInTheDocument();
   });
 });
