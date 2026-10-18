@@ -42,4 +42,4 @@ pnpm test     # Vitest
 pnpm test:e2e # Playwright
 ```
 
-> 설계 결정은 [docs/decisions](docs/decisions/), 성능 실측은 [docs/perf/baseline.md](docs/perf/baseline.md)에 정리해 두었습니다.
+> 설계 결정은 [docs/decisions](docs/decisions/), 성능 실측은 [docs/perf](docs/perf/)에 정리해 두었습니다. 고빈도 리포트는 [high-frequency](docs/perf/high-frequency/00-baseline.md), 재현 방법은 [methodology](docs/perf/methodology.md)에 있습니다.
